@@ -6,19 +6,19 @@ TEBIN is an intelligent fleet management platform designed to optimize cab dispa
 
 🚀 Key Features
 
-🔹 AI-Powered Demand Prediction
+🔹 AI-Powered Demand Prediction :
 Predicts upcoming ride demand using GCN + LSTM models trained on real-time city and ride data.
 
-🔹 Smart Dispatch System
+🔹 Smart Dispatch System : 
 Automatically assigns the best driver based on proximity, traffic, and profitability.
 
-🔹 Live Route Optimization
+🔹 Live Route Optimization :
 Dynamic routing powered by real-time traffic feeds and adaptive pathfinding for each vehicle.
 
-🔹 Golden Parking Points
+🔹 Golden Parking Points : 
 Identifies ideal parking zones where cabs are most likely to get their next ride faster.
 
-🔹 EV Fleet Intelligence
+🔹 EV Fleet Intelligence :
 Optimizes charging schedules and routes for electric vehicles to maximize uptime and efficiency.
 
 🧠 Tech Stack
@@ -41,9 +41,9 @@ Driver App / Dashboard → Displays earnings, efficiency stats, and navigation i
 
 📈 Real-World Impact
 
-📉 30–50% reduction in empty cab runs
-💰 20% increase in driver earnings
-⚡ 15–25% boost in EV efficiency
+📉 30–50% reduction in empty cab runs<br>
+💰 20% increase in driver earnings<br>
+⚡ 15–25% boost in EV efficiency<br>
 🌆 Scalable for multi-city deployment
 
 🧩 Custom AI Tools
@@ -56,7 +56,7 @@ Reinforcement Learning Simulator — Trains agents to minimize idle time and rou
 ⚙️ Installation
 
 # Clone this repository
-git clone https://github.com/your-username/tebin-smart-fleet.git
+git clone https://github.com/Neitikjangra/Smart-Fleet-Optimization-for-one---way-Cabs-.git
 
 # Navigate into the directory
 cd tebin-smart-fleet
@@ -80,27 +80,27 @@ uvicorn main:app --reload
 
 📊 Dashboard Overview
 
-Real-time Fleet Map
-Ride Demand Heatmap
-Driver Efficiency Metrics
-EV Charging & Energy Insights
+1. Real-time Fleet Map
+2. Ride Demand Heatmap
+3. Driver Efficiency Metrics
+4. EV Charging & Energy Insights
 
 (Built with React.js + Map APIs)
 
 
 💡 Future Scope
 
-Integration with smart city data streams
-Predictive maintenance for vehicles
-Cross-platform driver–customer mobile app
-CO₂ footprint analytics
+1. Integration with smart city data streams
+2. Predictive maintenance for vehicles
+3. Cross-platform driver–customer mobile app
+4. CO₂ footprint analytics
 
 
 🧑‍💻 Team
 
 Project Name: TEBIN — Smart Fleet Optimization
 Focus Areas: AI, Transportation, Sustainability
-Built By: Neitik Jangid/ TEBIN
+Built By: Neitik Jangid / TEBIN
 
 📜 License
 
