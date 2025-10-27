@@ -98,8 +98,8 @@ uvicorn main:app --reload
 
 🧑‍💻 Team
 
-Project Name: TEBIN — Smart Fleet Optimization
-Focus Areas: AI, Transportation, Sustainability
+Project Name: TEBIN — Smart Fleet Optimization<br>
+Focus Areas: AI, Transportation, Sustainability<br>
 Built By: Neitik Jangid / TEBIN
 
 📜 License
