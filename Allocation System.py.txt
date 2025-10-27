@@ -1,0 +1,333 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import ipywidgets as widgets
+from IPython.display import display, HTML, clear_output
+import time
+from geopy.distance import geodesic
+from datetime import datetime, timedelta
+import random
+from matplotlib.colors import LinearSegmentedColormap
+import matplotlib.markers as mmarkers
+import matplotlib.patheffects as path_effects
+
+# ======================
+# 1. ENHANCED DATA SETUP
+# ======================
+cabs = pd.DataFrame([
+    {"id": "DL-4S-101", "lat": 28.61, "lon": 77.20, "status": "Available", "rating": 4.5, "type": "SUV", "base_fare": 50, "speed": 35},
+    {"id": "DL-3S-205", "lat": 28.63, "lon": 77.23, "status": "Available", "rating": 4.2, "type": "Sedan", "base_fare": 40, "speed": 40},
+    {"id": "DL-1P-309", "lat": 28.59, "lon": 77.25, "status": "On-Trip", "rating": 4.7, "type": "Premium", "base_fare": 80, "speed": 45},
+    {"id": "DL-2H-107", "lat": 28.65, "lon": 77.18, "status": "Available", "rating": 3.9, "type": "Hatchback", "base_fare": 30, "speed": 30},
+    # Add more dummy cabs
+    {"id": "DL-5S-111", "lat": 28.58, "lon": 77.22, "status": "Available", "rating": 4.6, "type": "SUV", "base_fare": 55, "speed": 38},
+    {"id": "DL-6S-215", "lat": 28.64, "lon": 77.26, "status": "Available", "rating": 4.3, "type": "Sedan", "base_fare": 45, "speed": 42},
+    {"id": "DL-7P-319", "lat": 28.60, "lon": 77.24, "status": "On-Trip", "rating": 4.8, "type": "Premium", "base_fare": 90, "speed": 50},
+    {"id": "DL-8H-117", "lat": 28.66, "lon": 77.19, "status": "Available", "rating": 4.0, "type": "Hatchback", "base_fare": 35, "speed": 32},
+    {"id": "HR-9S-401", "lat": 28.50, "lon": 77.10, "status": "Available", "rating": 4.4, "type": "SUV", "base_fare": 60, "speed": 40},
+    {"id": "HR-10S-505", "lat": 28.55, "lon": 77.15, "status": "Available", "rating": 4.1, "type": "Sedan", "base_fare": 50, "speed": 35},
+    {"id": "UP-11P-609", "lat": 28.70, "lon": 77.28, "status": "On-Trip", "rating": 4.9, "type": "Premium", "base_fare": 100, "speed": 55},
+    {"id": "UP-12H-707", "lat": 28.75, "lon": 77.20, "status": "Available", "rating": 3.8, "type": "Hatchback", "base_fare": 40, "speed": 28},
+    {"id": "DL-9S-121", "lat": 28.62, "lon": 77.21, "status": "Available", "rating": 4.7, "type": "SUV", "base_fare": 52, "speed": 36},
+    {"id": "DL-10S-225", "lat": 28.67, "lon": 77.24, "status": "Available", "rating": 4.4, "type": "Sedan", "base_fare": 42, "speed": 41},
+    {"id": "DL-11P-329", "lat": 28.57, "lon": 77.27, "status": "On-Trip", "rating": 4.6, "type": "Premium", "base_fare": 85, "speed": 48},
+    {"id": "DL-12H-127", "lat": 28.63, "lon": 77.17, "status": "Available", "rating": 3.7, "type": "Hatchback", "base_fare": 32, "speed": 29},
+    {"id": "HR-13S-411", "lat": 28.52, "lon": 77.12, "status": "Available", "rating": 4.3, "type": "SUV", "base_fare": 58, "speed": 39},
+    {"id": "HR-14S-515", "lat": 28.56, "lon": 77.16, "status": "Available", "rating": 4.0, "type": "Sedan", "base_fare": 48, "speed": 34},
+    {"id": "UP-15P-619", "lat": 28.72, "lon": 77.30, "status": "On-Trip", "rating": 4.8, "type": "Premium", "base_fare": 95, "speed": 53},
+    {"id": "UP-16H-717", "lat": 28.77, "lon": 77.22, "status": "Available", "rating": 3.9, "type": "Hatchback", "base_fare": 42, "speed": 31},
+    {"id": "DL-13S-131", "lat": 28.60, "lon": 77.19, "status": "Available", "rating": 4.4, "type": "SUV", "base_fare": 54, "speed": 37},
+    {"id": "DL-14S-235", "lat": 28.65, "lon": 77.25, "status": "Available", "rating": 4.1, "type": "Sedan", "base_fare": 44, "speed": 40},
+    {"id": "DL-15P-339", "lat": 28.58, "lon": 77.26, "status": "On-Trip", "rating": 4.7, "type": "Premium", "base_fare": 88, "speed": 51},
+    {"id": "DL-16H-137", "lat": 28.64, "lon": 77.18, "status": "Available", "rating": 3.8, "type": "Hatchback", "base_fare": 34, "speed": 30},
+    {"id": "HR-17S-421", "lat": 28.51, "lon": 77.11, "status": "Available", "rating": 4.2, "type": "SUV", "base_fare": 59, "speed": 38},
+    {"id": "HR-18S-525", "lat": 28.57, "lon": 77.17, "status": "Available", "rating": 3.9, "type": "Sedan", "base_fare": 49, "speed": 33},
+    {"id": "UP-19P-629", "lat": 28.71, "lon": 77.29, "status": "On-Trip", "rating": 4.9, "type": "Premium", "base_fare": 98, "speed": 54},
+    {"id": "UP-20H-727", "lat": 28.76, "lon": 77.21, "status": "Available", "rating": 4.0, "type": "Hatchback", "base_fare": 41, "speed": 29}
+])
+
+locations = {
+    # Delhi/NCR
+    "Connaught Place": (28.6315, 77.2167),
+    "India Gate": (28.6129, 77.2295),
+    "DLF Cyber City": (28.4961, 77.0944),
+    "Akshardham": (28.6127, 77.2773),
+    "Qutub Minar": (28.5244, 77.1855),
+    "Red Fort": (28.6562, 77.2410),
+    "Lotus Temple": (28.5535, 77.2588),
+    "Hauz Khas Village": (28.5494, 77.2001),
+    # Agra
+    "Taj Mahal": (27.1751, 78.0421),
+    "Agra Fort": (27.1795, 78.0211),
+    "Mehtab Bagh": (27.1602, 78.0411),
+    # Jaipur
+    "Hawa Mahal": (26.9239, 75.8267),
+    "Amber Fort": (26.9855, 75.8513),
+    "Jantar Mantar": (26.9248, 75.8246),
+    "City Palace": (26.9258, 75.8236),
+    # Mumbai
+    "Gateway of India": (18.9219, 72.8347),
+    "Marine Drive": (18.9440, 72.8223),
+    "Bandra-Worli Sea Link": (19.0314, 72.8170),
+    "Chhatrapati Shivaji Terminus": (18.9398, 72.8355),
+    # Chennai
+    "Marina Beach": (13.0490, 80.2824),
+    "Kapaleeshwarar Temple": (13.0338, 80.2695),
+    "Fort St. George": (13.0800, 80.2877),
+    "Guindy National Park": (13.0046, 80.2217),
+    # Bangalore
+    "Lalbagh Botanical Garden": (12.9507, 77.5848),
+    "Cubbon Park": (12.9763, 77.5929),
+    "Bangalore Palace": (13.0083, 77.5920),
+    "ISKCON Temple": (13.0093, 77.5510),
+    # Kolkata
+    "Victoria Memorial": (22.5448, 88.3426),
+    "Howrah Bridge": (22.5850, 88.3460),
+    "Dakshineswar Kali Temple": (22.6558, 88.3560),
+    "Eco Park": (22.6032, 88.4652),
+    # Hyderabad
+    "Charminar": (17.3616, 78.4747),
+    "Golconda Fort": (17.3833, 78.4011),
+    "Hussain Sagar": (17.4239, 78.4738),
+    "Ramoji Film City": (17.2543, 78.6808),
+    # Pune
+    "Shaniwar Wada": (18.5196, 73.8553),
+    "Aga Khan Palace": (18.5523, 73.9023),
+    "Sinhagad Fort": (18.3665, 73.7555),
+    "Pataleshwar Temple": (18.5242, 73.8481),
+    # Other Locations
+    "Amritsar Golden Temple": (31.6200, 74.8765),
+    "Varanasi Ghats": (25.3109, 83.0103),
+    "Manali Mall Road": (32.2396, 77.1887),
+    "Goa Baga Beach": (15.5569, 73.7516),
+    "Ooty Botanical Gardens": (11.4036, 76.7050),
+}
+
+# ======================
+# 2. ENHANCED CORE FUNCTIONS
+# ======================
+def calculate_time_estimate(distance_km, speed_kph):
+    """Calculate time in minutes with traffic factor"""
+    base_time = (distance_km / speed_kph) * 60
+    traffic_factor = 1 + random.uniform(-0.1, 0.2)  # Random traffic variation
+    return max(5, base_time * traffic_factor)  # Minimum 5 minutes
+
+def calculate_trip_details(pickup, drop, cab_speed):
+    distance = geodesic(pickup, drop).km
+    time_estimate = calculate_time_estimate(distance, cab_speed)
+    return distance, time_estimate
+
+def calculate_score(cab, pickup_point):
+    distance_to_pickup = geodesic((cab["lat"], cab["lon"]), pickup_point).km
+    pickup_time = calculate_time_estimate(distance_to_pickup, cab["speed"])
+    distance_score = max(0, 1 - distance_to_pickup/30) * 0.6
+    rating_score = (cab["rating"]/5) * 0.4
+    return distance_score + rating_score, distance_to_pickup, pickup_time
+
+def allocate_cab(pickup_loc, drop_loc):
+    with output:
+        clear_output()
+        pickup = locations[pickup_loc]
+        drop = locations[drop_loc]
+        current_time = datetime.now()
+
+        display(HTML(f"""
+        <div style='font-family:Arial; margin-bottom:15px; background:#f8f9fa; padding:15px; border-radius:5px'>
+            <h3 style='margin-top:0; color:#2e86c1; font-size: 18px;'>Trip Details</h3>
+            <div style='display:grid; grid-template-columns:1fr 1fr; gap:15px; align-items: start;'>
+                <div>
+                    <p style='font-size: 14px;'><b>📍 Pickup:</b> {pickup_loc}</p>
+                    <p style='font-size: 14px;'><b>🕒 Current Time:</b> {current_time.strftime('%I:%M %p')}</p>
+                </div>
+                <div>
+                    <p style='font-size: 14px;'><b>🏁 Drop:</b> {drop_loc}</p>
+                    <p style='font-size: 14px;'><b>📏 Straight-Line Distance:</b> {geodesic(pickup, drop).km:.1f} km</p>
+                </div>
+            </div>
+        </div>
+        """))
+
+        display(HTML("<div style='margin:15px 0; font-size: 14px;'><b>🔍 Evaluating available cabs...</b></div>"))
+        time.sleep(1)
+
+        available = cabs[cabs["status"] == "Available"].copy()
+        available[["score", "pickup_distance", "pickup_time"]] = available.apply(
+            lambda x: calculate_score(x, pickup), axis=1, result_type="expand"
+        )
+
+        # Calculate trip time and fare for each cab
+        trip_details = []
+        for _, cab in available.iterrows():
+            distance, trip_time = calculate_trip_details(pickup, drop, cab["speed"])
+            trip_details.append({
+                "fare": cab["base_fare"] + distance * 10,
+                "trip_time": trip_time,
+                "total_time": cab["pickup_time"] + trip_time
+            })
+
+        trip_df = pd.DataFrame(trip_details)
+        available = pd.concat([available, trip_df], axis=1)
+
+        # Enhanced table with time estimates
+        display(HTML(
+            available[["id", "type", "pickup_distance", "pickup_time", "trip_time", "total_time", "fare", "rating", "score"]]
+            .sort_values("score", ascending=False)
+            .style.set_table_attributes('style="width:100%; font-family:Arial; border-collapse: collapse;"')
+            .set_caption("<b style='font-size: 16px;'>🧮 Cab Evaluation Matrix</b>")
+            .format({
+                "pickup_distance": "{:.1f} km",
+                "pickup_time": "{:.0f} min",
+                "trip_time": "{:.0f} min",
+                "total_time": "{:.0f} min",
+                "fare": "₹{:.0f}",
+                "score": "{:.3f}"
+            })
+            .highlight_max(subset=["score"], color="#d4edda")
+            .set_properties(**{'text-align': 'center', 'font-size': '14px'})
+            .bar(subset=["fare"], color='#ffd700')
+            .bar(subset=["total_time"], color='#90EE90')
+            .to_html()
+            .replace('<th>', '<th style="padding: 8px; border-bottom: 1px solid #ddd;">')
+            .replace('<td>', '<td style="padding: 8px; border-bottom: 1px solid #ddd;">')
+            .replace('<tr>', '<tr style="border-bottom: 1px solid #ddd;">') # add border to rows
+        ))
+
+        time.sleep(1.5)
+
+        # Select best cab
+        best_cab = available.iloc[available["score"].idxmax()]
+        arrival_time = current_time + timedelta(minutes=best_cab["pickup_time"])
+        drop_time = current_time + timedelta(minutes=best_cab["total_time"])
+
+        display(HTML(f"""
+        <div style='margin-top:20px; font-family:Arial;'>
+            <div style='background:#d4edda; padding:15px; border-radius:5px;'>
+                <h3 style='margin-top:0; font-size: 18px;'>✅ Optimal Cab Selected: {best_cab['id']}</h3>
+                <div style='display:grid; grid-template-columns:1fr 1fr; gap:15px; align-items: start;'>
+                    <div>
+                        <p style='font-size: 14px;'><b>🚗 Vehicle Type:</b> {best_cab['type']}</p>
+                        <p style='font-size: 14px;'><b>⭐ Rating:</b> {best_cab['rating']}/5</p>
+                        <p style='font-size: 14px;'><b>📏 Pickup Distance:</b> {best_cab['pickup_distance']:.1f} km</p>
+                    </div>
+                    <div>
+                        <p style='font-size: 14px;'><b>⏱️ Time to Pickup:</b> {best_cab['pickup_time']:.0f} min (Arrive ~{arrival_time.strftime('%I:%M %p')})</p>
+                        <p style='font-size: 14px;'><b>⏳ Trip Duration:</b> {best_cab['trip_time']:.0f} min</p>
+                        <p style='font-size: 14px;'><b>🕒 Total Time:</b> {best_cab['total_time']:.0f} min (Drop ~{drop_time.strftime('%I:%M %p')})</p>
+                    </div>
+                </div>
+                <div style='margin-top:10px; background:#ffffff; padding:10px; border-radius:5px;'>
+                    <p style='text-align:center; font-size: 20px;'><b>💰 Final Fare:</b> ₹{best_cab['fare']:.0f}</p>
+                </div>
+            </div>
+        </div>
+        """))
+
+        # 2D Visualization
+        plt.figure(figsize=(10, 6))
+        plt.scatter(available["lon"], available["lat"], c='blue', marker='o', s=50, alpha=0.7, label="Available Cabs")
+        plt.scatter(best_cab["lon"], best_cab["lat"], c='red', marker='*', s=100, label=f"Selected Cab: {best_cab['id']}")
+        plt.scatter(pickup[1], pickup[0], c='green', marker='P', s=100, label="Pickup")
+        plt.scatter(drop[1], drop[0], c='purple', marker='X', s=100, label="Drop")
+
+        #経路
+        plt.plot([best_cab["lon"], pickup[1], drop[1]], [best_cab["lat"], pickup[0], drop[0]], color='gray', linestyle='--', linewidth=2)
+
+        plt.xlabel("Longitude", fontsize=12)
+        plt.ylabel("Latitude", fontsize=12)
+        plt.title("📍 2D Cab Locations and Route", fontsize=16)
+        plt.legend(fontsize=10, loc='upper left')
+        plt.grid(True, linestyle='--', alpha=0.6)
+        plt.tight_layout()
+        plt.show()
+
+
+
+# ======================
+# 3. ENHANCED UI CONTROLS
+# ======================
+display(HTML("""
+<style>
+    .widget-label { min-width: 130px !important; font-weight:bold !important; }
+    .widget-dropdown { min-width: 250px !important; }
+    .widget-button { font-size:14px !important; }
+    .output { font-family: Arial !important; }
+</style>
+"""))
+
+output = widgets.Output()
+
+# Create enhanced controls
+controls = widgets.VBox([
+    widgets.HTML("<h3 style='font-family:Arial; color:#2e86c1; font-size: 20px;'>Enter Trip Details</h3>"),
+    widgets.HBox([
+        widgets.Dropdown(
+            options=list(locations.keys()),
+            value="Connaught Place",
+            description="Pickup Location:",
+            style={'description_width': 'initial'},
+            layout=widgets.Layout(width='350px')
+        )]
+    ),
+    widgets.HBox([
+        widgets.Dropdown(
+            options=list(locations.keys()),
+            value="India Gate",
+            description="Drop Location:",
+            style={'description_width': 'initial'},
+            layout=widgets.Layout(width='350px')
+        )]
+    ),
+    widgets.Button(
+        description="Find Best Cab",
+        button_style='success',
+        layout=widgets.Layout(width='350px', height='40px', margin='10px 0'),
+        style={'button_color': '#2ecc71'})
+], layout=widgets.Layout(
+    align_items='center',
+    padding='15px',
+    border='1px solid #eee',
+    border_radius='5px'
+))
+
+def on_click(btn):
+    allocate_cab(
+        controls.children[1].children[0].value,
+        controls.children[2].children[0].value
+    )
+
+controls.children[3].on_click(on_click)
+
+# ======================
+# 4. RUN ENHANCED DEMO
+# ======================
+display(HTML("""
+<div style='font-family:Arial; text-align:center; margin-bottom:20px'>
+    <h1 style='color:#2e86c1; margin-bottom:5px; font-size: 24px;'>🚖 Smart Cab Allocation System</h1>
+    <p style='color:#7f8c8d; font-size:16px'>Now with time estimates and enhanced visualizations</p>
+</div>
+"""))
+
+display(widgets.VBox([
+    controls,
+    output
+], layout=widgets.Layout(
+    align_items='center',
+    width='80%',
+    margin='0 auto'
+)))
+
+display(HTML("""
+<div style='font-family:Arial; margin-top:30px; padding:20px; background:#f8f9fa; border-radius:5px'>
+    <h3 style='margin-top:0; color:#2e86c1; font-size: 18px;'>✨ New Features:</h3>
+    <div style='display:grid; grid-template-columns:1fr 1fr; gap:20px;'>
+        <div>
+            <p style='font-size: 14px;'><b>⏱️ Time Estimates</b><br>Pickup ETA + Trip Duration</p>
+            <p style='font-size: 14px;'><b>📊 Enhanced Table</b><br>Colored bars for quick comparison</p>
+        </div>
+        <div>
+            <p style='font-size: 14px;'><b>🗺️ Improved Map</b><br>2D Route and Cab Visualization</p>
+            <p style='font-size: 14px;'><b>🕒 Timeline Projection</b><br>Complete trip schedule</p>
+        </div>
+    </div>
+</div>
+"""))
